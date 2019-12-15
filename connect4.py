@@ -55,7 +55,7 @@ def is_winning_move(board, turn):
             if board[r][c] == turn and board[r + 1][c + 1] == turn and board[r + 2][c + 2] == turn and board[r + 3][c + 3] == turn:
                 return True
     
-    # Check diagonally downard
+    # Check diagonally downward
     for r in range(3, ROW_COUNT):
         for c in range(COLUMN_COUNT - 3):
             if board[r][c] == turn and board[r - 1][c + 1] == turn and board[r - 2][c + 2] == turn and board[r - 3][c + 3] == turn:
@@ -80,6 +80,6 @@ while not game_over:
         game_over = True
         print_board(board)
         break
-    turn = 2 if turn == 1 else 1
+    turn = 1 if turn == 2 else 2  # Alternate turn between 1 and 2 each loop
 
 print(f'Player {turn} wins!')
