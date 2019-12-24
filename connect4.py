@@ -19,13 +19,15 @@ class Pane:
         self.radius = square_size // 2 - 5
         self.width = column_count * square_size
         self.height = (row_count + 1) * square_size  # Additional row for next piece at top
+        self.row_offset = square_size  # Used to account for additional row at top
+        self.circle_offset = square_size // 2  # Used to center circle starting point inside each grid square
         self.screen = pygame.display.set_mode((self.width, self.height))
 
     def draw_background(self):
         for r in range(self.board.row_count):
             for c in range(self.board.column_count):
-                pygame.draw.rect(self.screen, BLUE, (c * self.square_size, r * self.square_size + self.square_size, self.square_size, self.square_size))
-                pygame.draw.circle(self.screen, BLACK, (c * self.square_size + self.square_size // 2, r * self.square_size + self.square_size + self.square_size // 2), self.radius)
+                pygame.draw.rect(self.screen, BLUE, (c * self.square_size, r * self.square_size + self.row_offset, self.square_size, self.square_size))
+                pygame.draw.circle(self.screen, BLACK, (c * self.square_size + self.circle_offset, r * self.square_size + self.row_offset + self.circle_offset), self.radius)
         pygame.display.update()
 
     def fill_in_pieces(self):
@@ -36,12 +38,12 @@ class Pane:
                     current_color = RED
                 elif self.board.grid[r][c] == 2:
                     current_color = YELLOW
-                pygame.draw.circle(self.screen, current_color, (c * self.square_size + self.square_size // 2, self.height - (r * self.square_size + self.square_size // 2)), self.radius)
+                pygame.draw.circle(self.screen, current_color, (c * self.square_size + self.circle_offset, self.height - (r * self.square_size + self.circle_offset)), self.radius)
         pygame.display.update()
 
     def track_mouse_motion(self, x_position, current_color):
         pygame.draw.rect(self.screen, BLACK, (0, 0, self.width, self.square_size))
-        pygame.draw.circle(self.screen, current_color, (x_position, self.square_size // 2), self.radius)
+        pygame.draw.circle(self.screen, current_color, (x_position, self.circle_offset), self.radius)
         pygame.display.update()
 
     def try_drop_piece(self, x_position, turn):
