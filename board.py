@@ -27,7 +27,7 @@ class Board:
                     return True
 
         # Check vertically
-        for r in range(self.row_count - 2):
+        for r in range(self.row_count - 3):
             for c in range(self.column_count):
                 if self.grid[r][c] == turn and self.grid[r + 1][c] == turn and self.grid[r + 2][c] == turn and self.grid[r + 3][c] == turn:
                     return True
