@@ -26,19 +26,24 @@ class Pane:
     def draw_background(self):
         for r in range(self.board.row_count):
             for c in range(self.board.column_count):
-                pygame.draw.rect(self.screen, BLUE, (c * self.square_size, r * self.square_size + self.row_offset, self.square_size, self.square_size))
-                pygame.draw.circle(self.screen, BLACK, (c * self.square_size + self.circle_offset, r * self.square_size + self.row_offset + self.circle_offset), self.radius)
+                left = c * self.square_size
+                top = r * self.square_size + self.row_offset
+                pygame.draw.rect(self.screen, BLUE, (left, top, self.square_size, self.square_size))
+                pygame.draw.circle(self.screen, BLACK, (left + self.circle_offset, top + self.circle_offset), self.radius)
         pygame.display.update()
 
     def fill_in_pieces(self):
         for r in range(self.board.row_count):
             for c in range(self.board.column_count):
-                current_color = BLACK
                 if self.board.grid[r][c] == 1:
                     current_color = RED
                 elif self.board.grid[r][c] == 2:
                     current_color = YELLOW
-                pygame.draw.circle(self.screen, current_color, (c * self.square_size + self.circle_offset, self.height - (r * self.square_size + self.circle_offset)), self.radius)
+                else:
+                    current_color = BLACK
+                x_position = c * self.square_size + self.circle_offset
+                y_position = self.height - (r * self.square_size + self.circle_offset)  # Invert because pieces need to come from bottom up
+                pygame.draw.circle(self.screen, current_color, (x_position, y_position), self.radius)
         pygame.display.update()
 
     def track_mouse_motion(self, x_position, current_color):
