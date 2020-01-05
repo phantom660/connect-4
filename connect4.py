@@ -26,6 +26,7 @@ class Pane:
         self.screen = pygame.display.set_mode((self.width, self.height))
 
     def draw_background(self):
+        # Draws a grid of blue rectangles with black circles superimposed at the center of each rectangle
         for r in range(self.board.row_count):
             for c in range(self.board.column_count):
                 left = c * self.square_size
@@ -35,6 +36,7 @@ class Pane:
         pygame.display.update()
 
     def fill_in_pieces(self):
+        # Fills each spot on the board with the color of the piece at said spot
         for r in range(self.board.row_count):
             for c in range(self.board.column_count):
                 if self.board.grid[r][c] == 1:
@@ -49,11 +51,15 @@ class Pane:
         pygame.display.update()
 
     def track_mouse_motion(self, x_position, current_color):
-        pygame.draw.rect(self.screen, BLACK, (0, 0, self.width, self.square_size))
+        # Moves next piece x position along the top of the pane as user moves mouse
+        pygame.draw.rect(self.screen, BLACK, (0, 0, self.width, self.square_size))  # Resets top of pane to black
         pygame.draw.circle(self.screen, current_color, (x_position, self.circle_offset), self.radius)
         pygame.display.update()
 
     def try_drop_piece(self, x_position, turn):
+        # Converts user's mouse position into a column selection
+        # Fills said column if column isn't full
+        # Returns whether or not operation was completed
         column_selection = x_position // self.square_size
         if self.board.is_valid_location(column_selection):
             row = self.board.get_next_open_row(column_selection)
@@ -70,6 +76,8 @@ class Pane:
        
 
 def prompt_player(winner = False):
+    # Launches tkinter messagebox showing game end result
+    # Asks user to play again and returns user's choice
     title = 'Game Over!'
     if winner:
         message = f'Player {winner} wins! Would you like to play again?'
@@ -78,6 +86,7 @@ def prompt_player(winner = False):
     return tkinter.messagebox.askyesno(title=title, message=message)
 
 def main():
+    # Setup game
     tkinter.Tk().wm_withdraw()  # Hide tkinter main application window, only using messagebox
     pygame.init()
     pane = Pane(6, 7, 90)
@@ -86,6 +95,7 @@ def main():
     turn = 1
     current_color = RED
 
+    # Begin gameplay
     while continue_playing:
         for event in pygame.event.get():
 
@@ -104,10 +114,10 @@ def main():
                     elif pane.board.is_full():  # Check if there is a draw
                         continue_playing = prompt_player()
                         pane.reset()
-                    else:
+                    else:  # Prepare next turn
                         turn = 1 if turn == 2 else 2  # Alternate turn between 1 and 2 after each valid selection
                         current_color = RED if turn == 1 else YELLOW  # Player 1 color is red, player 2 is yellow
-                        pane.track_mouse_motion(event.pos[0], current_color) # Switch the next piece color
+                        pane.track_mouse_motion(event.pos[0], current_color)  # Switch the next piece color
 
 
 if __name__ == "__main__":
