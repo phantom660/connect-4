@@ -17,6 +17,7 @@ class Board:
                 return row
 
     def drop_piece(self, row, column, turn):
+        # Fill the specified point with the current turn
         self.grid[row][column] = turn
 
     def has_four_in_a_row(self, turn):
@@ -46,5 +47,20 @@ class Board:
 
         return False
 
+    def is_full(self):
+        # Determine if every spot in the grid is filled
+        for r in range(self.row_count):
+            for c in range(self.column_count):
+                if self.grid[r][c] == 0:
+                    return False
+        return True
+
+    def reset(self):
+        # Fill the grid with zeros for a new round
+        for r in range(self.row_count):
+            for c in range(self.column_count):
+                self.grid[r][c] = 0
+
     def print_grid(self):
+        # Display the game's state in the console
         print(np.flip(self.grid, 0))
