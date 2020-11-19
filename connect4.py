@@ -39,9 +39,9 @@ class Pane:
         # Fills each spot on the board with the color of the piece at said spot
         for r in range(self.board.row_count):
             for c in range(self.board.column_count):
-                if self.board.grid[r][c] == 1:
+                if self.board.grid[r, c] == 1:
                     current_color = RED
-                elif self.board.grid[r][c] == 2:
+                elif self.board.grid[r, c] == 2:
                     current_color = YELLOW
                 else:
                     current_color = BLACK
@@ -73,7 +73,7 @@ class Pane:
         self.board.reset()
         self.draw_background()
         self.fill_in_pieces()
-       
+
 
 def prompt_player(winner = False):
     # Launches tkinter messagebox showing game end result
