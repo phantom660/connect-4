@@ -38,7 +38,7 @@ class Board:
             for c in range(self.column_count - 3):
                 if self.grid[r][c] == turn and self.grid[r + 1][c + 1] == turn and self.grid[r + 2][c + 2] == turn and self.grid[r + 3][c + 3] == turn:
                     return True
-        
+
         # Check diagonally downward
         for r in range(3, self.row_count):
             for c in range(self.column_count - 3):
@@ -49,17 +49,11 @@ class Board:
 
     def is_full(self):
         # Determine if every spot in the grid is filled
-        for r in range(self.row_count):
-            for c in range(self.column_count):
-                if self.grid[r][c] == 0:
-                    return False
-        return True
+        return self.grid.all()
 
     def reset(self):
         # Fill the grid with zeros for a new round
-        for r in range(self.row_count):
-            for c in range(self.column_count):
-                self.grid[r][c] = 0
+        self.grid = np.zeros((self.row_count, self.column_count))
 
     def print_grid(self):
         # Display the game's state in the console
