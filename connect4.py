@@ -89,6 +89,7 @@ def main():
     # Setup game
     tkinter.Tk().wm_withdraw()  # Hide tkinter main application window, only using messagebox
     pygame.init()
+    pygame.display.set_caption('Connect 4')
     pane = Pane(6, 7, 90)
     pane.draw_background()
     continue_playing = True
