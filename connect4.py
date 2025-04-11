@@ -6,6 +6,8 @@ import pygame
 
 import board
 
+import random
+
 
 # Color constants
 BLACK = (0, 0, 0)
@@ -75,6 +77,12 @@ class Pane:
         self.fill_in_pieces()
 
 
+def get_random_valid_column(board_obj):
+    valid_columns = [c for c in range(board_obj.column_count) if board_obj.is_valid_location(c)]
+    if valid_columns:
+        return random.choice(valid_columns)
+    return None
+
 def prompt_player(winner = False):
     # Launches tkinter messagebox showing game end result
     # Asks user to play again and returns user's choice
@@ -86,39 +94,75 @@ def prompt_player(winner = False):
     return tkinter.messagebox.askyesno(title=title, message=message)
 
 def main():
-    # Setup game
-    tkinter.Tk().wm_withdraw()  # Hide tkinter main application window, only using messagebox
+    tkinter.Tk().wm_withdraw()
     pygame.init()
     pygame.display.set_caption('Connect 4')
     pane = Pane(6, 7, 90)
     pane.draw_background()
+
+    # New state variables
+    play_vs_ai = False  # Default: Player vs Player
+
+    font = pygame.font.SysFont("monospace", 30)
+    ai_text = font.render("Press A to toggle AI Mode", True, (255, 255, 255))
+    ai_status = lambda status: font.render(f"AI Mode: {'ON' if status else 'OFF'}", True, (255, 255, 255))
+
+    pane.screen.blit(ai_text, (10, 10))
+    pane.screen.blit(ai_status(play_vs_ai), (10, 40))
+    pygame.display.update()
+
     continue_playing = True
     turn = 1
     current_color = RED
 
-    # Begin gameplay
     while continue_playing:
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:
                 sys.exit()
 
-            elif event.type == pygame.MOUSEMOTION:
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_a:
+                    play_vs_ai = not play_vs_ai
+                    pane.draw_background()
+                    pane.fill_in_pieces()
+                    pane.screen.blit(ai_text, (10, 10))
+                    pane.screen.blit(ai_status(play_vs_ai), (10, 40))
+                    pygame.display.update()
+
+            elif event.type == pygame.MOUSEMOTION and (not play_vs_ai or turn == 1):
                 pane.track_mouse_motion(event.pos[0], current_color)
 
-            elif event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == pygame.MOUSEBUTTONDOWN and (not play_vs_ai or turn == 1):
                 if pane.try_drop_piece(event.pos[0], turn):
                     pane.fill_in_pieces()
-                    if pane.board.has_four_in_a_row(turn):  # Check if the current player won
+                    if pane.board.has_four_in_a_row(turn):
                         continue_playing = prompt_player(turn)
                         pane.reset()
-                    elif pane.board.is_full():  # Check if there is a draw
+                    elif pane.board.is_full():
                         continue_playing = prompt_player()
                         pane.reset()
-                    else:  # Prepare next turn
-                        turn = 1 if turn == 2 else 2  # Alternate turn between 1 and 2 after each valid selection
-                        current_color = RED if turn == 1 else YELLOW  # Player 1 color is red, player 2 is yellow
-                        pane.track_mouse_motion(event.pos[0], current_color)  # Switch the next piece color
+                    else:
+                        turn = 2 if turn == 1 else 1
+                        current_color = RED if turn == 1 else YELLOW
+
+        # AI's turn
+        if play_vs_ai and turn == 2:
+            pygame.time.wait(500)  # Add a small delay for realism
+            ai_column = get_random_valid_column(pane.board)
+            if ai_column is not None:
+                row = pane.board.get_next_open_row(ai_column)
+                pane.board.drop_piece(row, ai_column, turn)
+                pane.fill_in_pieces()
+                if pane.board.has_four_in_a_row(turn):
+                    continue_playing = prompt_player(turn)
+                    pane.reset()
+                elif pane.board.is_full():
+                    continue_playing = prompt_player()
+                    pane.reset()
+                else:
+                    turn = 1
+                    current_color = RED
 
 
 if __name__ == "__main__":
