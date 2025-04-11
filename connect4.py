@@ -2,7 +2,6 @@ import sys
 import tkinter
 import tkinter.messagebox
 from tkinter import simpledialog
-
 import pygame
 import random
 import board
@@ -38,12 +37,7 @@ class Pane:
         for r in range(self.board.row_count):
             for c in range(self.board.column_count):
                 value = self.board.grid[r, c]
-                if value == 1:
-                    color = RED
-                elif value == 2:
-                    color = YELLOW
-                else:
-                    color = BLACK
+                color = RED if value == 1 else YELLOW if value == 2 else BLACK
                 x = c * self.square_size + self.circle_offset
                 y = self.height - (r * self.square_size + self.circle_offset)
                 pygame.draw.circle(self.screen, color, (x, y), self.radius)
@@ -54,8 +48,7 @@ class Pane:
         pygame.draw.circle(self.screen, color, (x_pos, self.circle_offset), self.radius)
         pygame.display.update()
 
-    def try_drop_piece(self, x_pos, turn):
-        col = x_pos // self.square_size
+    def try_drop_piece(self, col, turn):
         if self.board.is_valid_location(col):
             row = self.board.get_next_open_row(col)
             self.board.drop_piece(row, col, turn)
@@ -63,7 +56,6 @@ class Pane:
         return False
 
     def reset(self):
-        self.screen = pygame.display.set_mode((self.width, self.height))
         self.board.reset()
         self.draw_background()
         self.fill_in_pieces()
@@ -77,111 +69,123 @@ def get_random_valid_column(board_obj):
 def prompt_mode():
     root = tkinter.Tk()
     root.withdraw()
-    mode = simpledialog.askstring("Select Mode", "Choose game mode:\n1: Player vs Player\n2: Player vs AI\n3: AI vs AI")
-    return mode
+    return simpledialog.askstring("Select Mode", "Choose game mode:\n1: Player vs Player\n2: Player vs AI\n3: AI vs AI")
 
 
-def prompt_player(winner=False):
-    title = 'Game Over!'
-    message = f'Player {winner} wins! Play again?' if winner else 'It was a draw. Play again?'
+def prompt_restart(winner=None):
+    title = "Game Over!"
+    if winner:
+        message = f"Player {winner} wins! Play again?"
+    else:
+        message = "It's a draw! Play again?"
     return tkinter.messagebox.askyesno(title=title, message=message)
+
+
+def check_game_end(pane, turn):
+    if pane.board.has_four_in_a_row(turn):
+        return prompt_restart(turn)
+    elif pane.board.is_full():
+        return prompt_restart()
+    return None  # Game not over
+
+
+def play_pvp(pane):
+    turn = 1
+    current_color = RED
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            elif event.type == pygame.MOUSEMOTION:
+                pane.track_mouse_motion(event.pos[0], current_color)
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                col = event.pos[0] // pane.square_size
+                if pane.try_drop_piece(col, turn):
+                    pane.fill_in_pieces()
+                    game_continue = check_game_end(pane, turn)
+                    if game_continue is not None:
+                        return game_continue
+                    turn = 2 if turn == 1 else 1
+                    current_color = RED if turn == 1 else YELLOW
+
+
+def play_pvai(pane):
+    turn = 1
+    current_color = RED
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            elif event.type == pygame.MOUSEMOTION and turn == 1:
+                pane.track_mouse_motion(event.pos[0], current_color)
+            elif event.type == pygame.MOUSEBUTTONDOWN and turn == 1:
+                col = event.pos[0] // pane.square_size
+                if pane.try_drop_piece(col, turn):
+                    pane.fill_in_pieces()
+                    game_continue = check_game_end(pane, turn)
+                    if game_continue is not None:
+                        return game_continue
+                    turn = 2
+                    current_color = YELLOW
+
+        if turn == 2:
+            pygame.time.wait(500)
+            col = get_random_valid_column(pane.board)
+            if col is not None and pane.try_drop_piece(col, turn):
+                pane.fill_in_pieces()
+                game_continue = check_game_end(pane, turn)
+                if game_continue is not None:
+                    return game_continue
+                turn = 1
+                current_color = RED
+
+
+def play_aivai(pane):
+    turn = 1
+    current_color = RED
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+
+        pygame.time.wait(500)
+        col = get_random_valid_column(pane.board)
+        if col is not None and pane.try_drop_piece(col, turn):
+            pane.fill_in_pieces()
+            game_continue = check_game_end(pane, turn)
+            if game_continue is not None:
+                return game_continue
+            turn = 2 if turn == 1 else 1
+            current_color = RED if turn == 1 else YELLOW
 
 
 def main():
     pygame.init()
-    pygame.display.set_caption('Connect 4')
+    pygame.display.set_caption("Connect 4")
 
-    mode = prompt_mode()
-    if mode not in ['1', '2', '3']:
-        print("Invalid mode selected.")
-        return
+    while True:
+        mode = prompt_mode()
+        if mode not in {'1', '2', '3'}:
+            print("Invalid or no mode selected. Exiting.")
+            break
 
-    pane = Pane(6, 7, 90)
-    font = pygame.font.SysFont("monospace", 30)
+        pane = Pane(6, 7, 90)
+        pane.draw_background()
 
-    continue_playing = True
-    turn = 1
-    current_color = RED
-    game_mode = int(mode)
+        if mode == '1':
+            again = play_pvp(pane)
+        elif mode == '2':
+            again = play_pvai(pane)
+        elif mode == '3':
+            again = play_aivai(pane)
 
-    pane.draw_background()
-
-    while continue_playing:
-        if game_mode == 1:  # Player vs Player
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    sys.exit()
-                elif event.type == pygame.MOUSEMOTION:
-                    pane.track_mouse_motion(event.pos[0], current_color)
-                elif event.type == pygame.MOUSEBUTTONDOWN:
-                    if pane.try_drop_piece(event.pos[0], turn):
-                        pane.fill_in_pieces()
-                        if pane.board.has_four_in_a_row(turn):
-                            continue_playing = prompt_player(turn)
-                            pane.reset()
-                        elif pane.board.is_full():
-                            continue_playing = prompt_player()
-                            pane.reset()
-                        else:
-                            turn = 2 if turn == 1 else 1
-                            current_color = RED if turn == 1 else YELLOW
-
-        elif game_mode == 2:  # Player vs AI
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    sys.exit()
-                elif event.type == pygame.MOUSEMOTION and turn == 1:
-                    pane.track_mouse_motion(event.pos[0], current_color)
-                elif event.type == pygame.MOUSEBUTTONDOWN and turn == 1:
-                    if pane.try_drop_piece(event.pos[0], turn):
-                        pane.fill_in_pieces()
-                        if pane.board.has_four_in_a_row(turn):
-                            continue_playing = prompt_player(turn)
-                            pane.reset()
-                        elif pane.board.is_full():
-                            continue_playing = prompt_player()
-                            pane.reset()
-                        else:
-                            turn = 2
-                            current_color = YELLOW
-
-            if turn == 2:
-                pygame.time.wait(500)
-                col = get_random_valid_column(pane.board)
-                if col is not None:
-                    row = pane.board.get_next_open_row(col)
-                    pane.board.drop_piece(row, col, turn)
-                    pane.fill_in_pieces()
-                    if pane.board.has_four_in_a_row(turn):
-                        continue_playing = prompt_player(turn)
-                        pane.reset()
-                    elif pane.board.is_full():
-                        continue_playing = prompt_player()
-                        pane.reset()
-                    else:
-                        turn = 1
-                        current_color = RED
-
-        elif game_mode == 3:  # AI vs AI
-            pygame.time.wait(500)
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    sys.exit()
-
-            col = get_random_valid_column(pane.board)
-            if col is not None:
-                row = pane.board.get_next_open_row(col)
-                pane.board.drop_piece(row, col, turn)
-                pane.fill_in_pieces()
-                if pane.board.has_four_in_a_row(turn):
-                    continue_playing = prompt_player(turn)
-                    pane.reset()
-                elif pane.board.is_full():
-                    continue_playing = prompt_player()
-                    pane.reset()
-                else:
-                    turn = 2 if turn == 1 else 1
-                    current_color = RED if turn == 1 else YELLOW
+        if not again:
+            print("Thanks for playing!")
+            break
+        pane.reset()
 
 
 if __name__ == "__main__":
