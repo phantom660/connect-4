@@ -5,12 +5,25 @@ from tkinter import simpledialog
 import pygame
 import random
 import board
+import minimax_ai_better
+import math
+import time
+
 
 # Color constants
 BLACK = (0, 0, 0)
 BLUE = (0, 0, 255)
 RED = (255, 0, 0)
 YELLOW = (255, 255, 0)
+LIGHT_BG = (245, 245, 245)
+LIGHT_BLUE = (173, 216, 230)   
+WHITE = (255, 255, 255)
+
+performance_stats = {
+    "move_times": [],
+    "ai_move_count": 0
+}
+
 
 
 class Pane:
@@ -29,8 +42,8 @@ class Pane:
             for c in range(self.board.column_count):
                 left = c * self.square_size
                 top = r * self.square_size + self.row_offset
-                pygame.draw.rect(self.screen, BLUE, (left, top, self.square_size, self.square_size))
-                pygame.draw.circle(self.screen, BLACK, (left + self.circle_offset, top + self.circle_offset), self.radius)
+                pygame.draw.rect(self.screen, LIGHT_BLUE, (left, top, self.square_size, self.square_size))
+                pygame.draw.circle(self.screen, WHITE, (left + self.circle_offset, top + self.circle_offset), self.radius)
         pygame.display.update()
 
     def fill_in_pieces(self):
@@ -44,7 +57,7 @@ class Pane:
         pygame.display.update()
 
     def track_mouse_motion(self, x_pos, color):
-        pygame.draw.rect(self.screen, BLACK, (0, 0, self.width, self.square_size))
+        pygame.draw.rect(self.screen, LIGHT_BG, (0, 0, self.width, self.square_size))
         pygame.draw.circle(self.screen, color, (x_pos, self.circle_offset), self.radius)
         pygame.display.update()
 
@@ -69,7 +82,7 @@ def get_random_valid_column(board_obj):
 def prompt_mode():
     root = tkinter.Tk()
     root.withdraw()
-    return simpledialog.askstring("Select Mode", "Choose game mode:\n1: Player vs Player\n2: Player vs AI\n3: AI vs AI")
+    return simpledialog.askstring("Select Mode", "Choose game mode:\n1: Player vs Player\n2: Player vs RandomAI\n3: RandomAI vs RandomAI\n4: Player vs MinimaxAI\n5: MinimaxAI vs MinimaxAI")
 
 
 def prompt_restart(winner=None):
@@ -110,7 +123,7 @@ def play_pvp(pane):
                     current_color = RED if turn == 1 else YELLOW
 
 
-def play_pvai(pane):
+def play_pvrandomai(pane):
     turn = 1
     current_color = RED
 
@@ -142,7 +155,7 @@ def play_pvai(pane):
                 current_color = RED
 
 
-def play_aivai(pane):
+def play_randomaivsrandomai(pane):
     turn = 1
     current_color = RED
 
@@ -161,6 +174,69 @@ def play_aivai(pane):
             turn = 2 if turn == 1 else 1
             current_color = RED if turn == 1 else YELLOW
 
+def play_pvminimaxai(pane):
+    turn = 1
+    current_color = RED
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+            elif event.type == pygame.MOUSEMOTION and turn == 1:
+                pane.track_mouse_motion(event.pos[0], current_color)
+            elif event.type == pygame.MOUSEBUTTONDOWN and turn == 1:
+                col = event.pos[0] // pane.square_size
+                if pane.try_drop_piece(col, turn):
+                    pane.fill_in_pieces()
+                    game_continue = check_game_end(pane, turn)
+                    if game_continue is not None:
+                        return game_continue
+                    turn = 2
+                    current_color = YELLOW
+
+        if turn == 2:
+
+            start_time = time.time()
+
+            col, _ = minimax_ai_better.minimax(pane.board, depth=6, alpha=-math.inf, beta=math.inf, maximizingPlayer=True, piece=2)
+            if col is not None and pane.try_drop_piece(col, turn):
+                pane.fill_in_pieces()
+                game_continue = check_game_end(pane, turn)
+                if game_continue is not None:
+                    return game_continue
+                turn = 1
+                current_color = RED
+
+            duration = time.time() - start_time
+            performance_stats["move_times"].append(duration)
+            performance_stats["ai_move_count"] += 1
+            print(f"[AI Move] Took {duration:.3f} seconds")
+
+def play_minimax_vs_minimaxai(pane):
+    turn = 1
+    current_color = RED
+
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                sys.exit()
+
+        start_time = time.time()
+
+        col, _ = minimax_ai_better.minimax(pane.board, depth=6, alpha=-math.inf, beta=math.inf, maximizingPlayer=True, piece=turn)
+        if col is not None and pane.try_drop_piece(col, turn):
+            pane.fill_in_pieces()
+            game_continue = check_game_end(pane, turn)
+            if game_continue is not None:
+                return game_continue
+            turn = 2 if turn == 1 else 1
+            current_color = RED if turn == 1 else YELLOW
+
+        duration = time.time() - start_time
+        performance_stats["move_times"].append(duration)
+        performance_stats["ai_move_count"] += 1
+        print(f"[AI Move] Took {duration:.3f} seconds")
+
 
 def main():
     pygame.init()
@@ -168,7 +244,7 @@ def main():
 
     while True:
         mode = prompt_mode()
-        if mode not in {'1', '2', '3'}:
+        if mode not in {'1', '2', '3', '4', '5'}:
             print("Invalid or no mode selected. Exiting.")
             break
 
@@ -178,9 +254,18 @@ def main():
         if mode == '1':
             again = play_pvp(pane)
         elif mode == '2':
-            again = play_pvai(pane)
+            again = play_pvrandomai(pane)
         elif mode == '3':
-            again = play_aivai(pane)
+            again = play_randomaivsrandomai(pane)
+        elif mode == '4':
+            again = play_pvminimaxai(pane)
+        elif mode == '5':
+            again = play_minimax_vs_minimaxai(pane)
+
+        if performance_stats["move_times"]:
+            avg_time = sum(performance_stats["move_times"]) / len(performance_stats["move_times"])
+            print(f"Total AI Moves: {performance_stats['ai_move_count']}")
+            print(f"Average AI Move Time: {avg_time:.3f} seconds")
 
         if not again:
             print("Thanks for playing!")
