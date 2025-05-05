@@ -7,6 +7,7 @@ import random
 import board
 import greedy_ai
 import minimax_ai_better
+import mcts_ai
 import math
 import time
 
@@ -88,11 +89,12 @@ def prompt_players():
         "1": "Human",
         "2": "RandomAI",
         "3": "GreedyAI",
-        "4": "MinimaxAI-H2"
+        "4": "MinimaxAI-H2",
+        "5": "MCTS"
     }
 
-    p1 = simpledialog.askstring("Player 1", "Select Player 1:\n1: Human\n2: RandomAI\n3: GreedyAI\n4: MinimaxAI-H2")
-    p2 = simpledialog.askstring("Player 2", "Select Player 2:\n1: Human\n2: RandomAI\n3: GreedyAI\n4: MinimaxAI-H2")
+    p1 = simpledialog.askstring("Player 1", "Select Player 1:\n1: Human\n2: RandomAI\n3: GreedyAI\n4: MinimaxAI-H2\n5: MCTS")
+    p2 = simpledialog.askstring("Player 2", "Select Player 2:\n1: Human\n2: RandomAI\n3: GreedyAI\n4: MinimaxAI-H2\n5: MCTS")
 
     if p1 in options and p2 in options:
         return options[p1], options[p2]
@@ -160,6 +162,12 @@ def play_custom_game(pane, player1_type, player2_type):
             start_time = time.time()
             col, _ = minimax_ai_better.minimax(pane.board, depth=6, alpha=-math.inf, beta=math.inf, maximizingPlayer=True, piece=turn)
             duration = time.time() - start_time
+        elif current_type == "MCTS":
+            pygame.time.wait(300)
+            start_time = time.time()
+            col = mcts_ai.mcts_move(pane.board, turn)
+            duration = time.time() - start_time
+
         else:
             print(f"Unknown player type: {current_type}")
             sys.exit()
