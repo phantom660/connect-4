@@ -5,7 +5,7 @@ from tkinter import simpledialog
 import pygame
 import random
 import board
-import minimax_ai
+import greedy_ai
 import minimax_ai_better
 import math
 import time
@@ -87,12 +87,12 @@ def prompt_players():
     options = {
         "1": "Human",
         "2": "RandomAI",
-        "3": "MinimaxAI-H1",
+        "3": "GreedyAI",
         "4": "MinimaxAI-H2"
     }
 
-    p1 = simpledialog.askstring("Player 1", "Select Player 1:\n1: Human\n2: RandomAI\n3: MinimaxAI-H1\n4: MinimaxAI-H2")
-    p2 = simpledialog.askstring("Player 2", "Select Player 2:\n1: Human\n2: RandomAI\n3: MinimaxAI-H1\n4: MinimaxAI-H2")
+    p1 = simpledialog.askstring("Player 1", "Select Player 1:\n1: Human\n2: RandomAI\n3: GreedyAI\n4: MinimaxAI-H2")
+    p2 = simpledialog.askstring("Player 2", "Select Player 2:\n1: Human\n2: RandomAI\n3: GreedyAI\n4: MinimaxAI-H2")
 
     if p1 in options and p2 in options:
         return options[p1], options[p2]
@@ -150,10 +150,10 @@ def play_custom_game(pane, player1_type, player2_type):
             start_time = time.time()
             col = get_random_valid_column(pane.board)
             duration = time.time() - start_time
-        elif current_type == "MinimaxAI-H1":
+        elif current_type == "GreedyAI":
             pygame.time.wait(300)
             start_time = time.time()
-            col, _ = minimax_ai.minimax(pane.board, depth=6, alpha=-math.inf, beta=math.inf, maximizingPlayer=True, piece=turn)
+            col = greedy_ai.greedy_move(pane.board, piece=turn)
             duration = time.time() - start_time
         elif current_type == "MinimaxAI-H2":
             pygame.time.wait(300)
