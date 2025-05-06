@@ -113,9 +113,7 @@ def prompt_restart(winner=None):
 
 def check_game_end(pane, turn):
     if pane.board.has_four_in_a_row(turn):
-        return prompt_restart(turn)
-    elif pane.board.is_full():
-        return prompt_restart()
+        return 1
     return None  # Game not over
 
 
@@ -143,7 +141,7 @@ def play_custom_game(pane, player1_type, player2_type):
                         performance_stats[turn]["moves"] += 1
                         performance_stats[turn]["times"].append(0)  # human time not timed
                         if (r := check_game_end(pane, turn)) is not None:
-                            return r
+                            return turn if pane.board.has_four_in_a_row(turn) else 0
                         turn = 2 if turn == 1 else 1
             continue
 
@@ -178,10 +176,10 @@ def play_custom_game(pane, player1_type, player2_type):
             performance_stats[turn]["times"].append(duration)
             print(f"[Player {turn} - {current_type}] Move took {duration:.3f} seconds")
             if (r := check_game_end(pane, turn)) is not None:
-                return r
+                return turn if pane.board.has_four_in_a_row(turn) else 0
             turn = 2 if turn == 1 else 1
 
-def report_stats():
+def report_stats(winner):
     print("\n===== Game Performance Stats =====")
     for player in [1, 2]:
         moves = performance_stats[player]["moves"]
@@ -191,6 +189,10 @@ def report_stats():
             print(f"Player {player} | Type: {player_types[player]} | Moves: {moves} | Avg Time: {avg_time:.3f}s")
         else:
             print(f"Player {player} made no moves.")
+    if winner == 0:
+        print("Result: It's a draw!")
+    else:
+        print(f"Result: Player {winner} ({player_types[winner]}) wins!")
     print("==================================\n")
 
 def main():
@@ -211,9 +213,10 @@ def main():
         performance_stats = {1: {"times": [], "moves": 0}, 2: {"times": [], "moves": 0}}
         player_types = {1: player1_type, 2: player2_type}
 
-        again = play_custom_game(pane, player1_type, player2_type)
-        report_stats()
-
+        winner = play_custom_game(pane, player1_type, player2_type)
+        report_stats(winner)
+        
+        again = prompt_restart(winner if winner else None)
         if not again:
             print("Thanks for playing!")
             break
