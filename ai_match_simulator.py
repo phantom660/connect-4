@@ -4,13 +4,15 @@ import random
 import board
 import greedy_ai
 import minimax_ai_H1
+import minimax_ai_H2
 import mcts_ai
 
 AI_TYPES = {
     "1": "RandomAI",
     "2": "GreedyAI",
     "3": "MinimaxAI-H1",
-    "4": "MCTS"
+    "4": "MCTS",
+    "5": "MinimaxAI-H2"
 }
 
 def get_ai_move(ai_type, board_obj, piece):
@@ -20,6 +22,9 @@ def get_ai_move(ai_type, board_obj, piece):
         return greedy_ai.greedy_move(board_obj, piece)
     elif ai_type == "MinimaxAI-H1":
         col, _ = minimax_ai_H1.minimax(board_obj, depth=4, alpha=-math.inf, beta=math.inf, maximizingPlayer=True, piece=piece)
+        return col
+    elif ai_type == "MinimaxAI-H2":
+        col, _ = minimax_ai_H2.minimax(board_obj, depth=4, alpha=-math.inf, beta=math.inf, maximizingPlayer=True, piece=piece)
         return col
     elif ai_type == "MCTS":
         return mcts_ai.mcts_move(board_obj, piece)
@@ -32,19 +37,27 @@ def simulate_game(p1_type, p2_type):
     player_types = {1: p1_type, 2: p2_type}
     
     move_times = {1: [], 2: []}
+    move_count = 0  # Track how many moves have been made
 
     while True:
         current_player = turn
         ai_type = player_types[current_player]
 
         start_time = time.time()
-        col = get_ai_move(ai_type, game_board, current_player)
+
+        # First two moves are always random
+        if move_count < 2:
+            col = random.choice([c for c in range(game_board.column_count) if game_board.is_valid_location(c)])
+        else:
+            col = get_ai_move(ai_type, game_board, current_player)
+
         move_duration = time.time() - start_time
         move_times[current_player].append(move_duration)
 
         if col is not None and game_board.is_valid_location(col):
             row = game_board.get_next_open_row(col)
             game_board.drop_piece(row, col, current_player)
+            move_count += 1
 
             if game_board.has_four_in_a_row(current_player):
                 return current_player, move_times
@@ -52,7 +65,9 @@ def simulate_game(p1_type, p2_type):
                 return 0, move_times
             turn = 2 if turn == 1 else 1
         else:
+            # If invalid move is made, the other player wins
             return 3 - current_player, move_times
+
 
 def run_matchup(ai1, ai2, num_games):
     stats = {

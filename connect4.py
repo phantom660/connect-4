@@ -7,6 +7,7 @@ import random
 import board
 import greedy_ai
 import minimax_ai_H1
+import minimax_ai_H2
 import mcts_ai
 import math
 import time
@@ -90,11 +91,12 @@ def prompt_players():
         "2": "RandomAI",
         "3": "GreedyAI",
         "4": "MCTS",
-        "5": "MinimaxAI-H1"
+        "5": "MinimaxAI-H1",
+        "6": "MinimaxAI-H2"
     }
 
-    p1 = simpledialog.askstring("Player 1", "Select Player 1:\n1: Human\n2: RandomAI\n3: GreedyAI\n4: MCTS\n5: MinimaxAI-H1")
-    p2 = simpledialog.askstring("Player 2", "Select Player 2:\n1: Human\n2: RandomAI\n3: GreedyAI\n4: MCTS\n5: MinimaxAI-H1")
+    p1 = simpledialog.askstring("Player 1", "Select Player 1:\n1: Human\n2: RandomAI\n3: GreedyAI\n4: MCTS\n5: MinimaxAI-H1\n6: MinimaxAI-H2")
+    p2 = simpledialog.askstring("Player 2", "Select Player 2:\n1: Human\n2: RandomAI\n3: GreedyAI\n4: MCTS\n5: MinimaxAI-H1\n6: MinimaxAI-H2")
 
     if p1 in options and p2 in options:
         return options[p1], options[p2]
@@ -121,6 +123,7 @@ def play_custom_game(pane, player1_type, player2_type):
     turn = 1
     color_map = {1: RED, 2: YELLOW}
     player_types = {1: player1_type, 2: player2_type}
+    move_count = 0  # Track total number of moves
 
     while True:
         for event in pygame.event.get():
@@ -139,45 +142,47 @@ def play_custom_game(pane, player1_type, player2_type):
                     if pane.try_drop_piece(col, turn):
                         pane.fill_in_pieces()
                         performance_stats[turn]["moves"] += 1
-                        performance_stats[turn]["times"].append(0)  # human time not timed
+                        performance_stats[turn]["times"].append(0)
+                        move_count += 1
                         if (r := check_game_end(pane, turn)) is not None:
                             return turn if pane.board.has_four_in_a_row(turn) else 0
                         turn = 2 if turn == 1 else 1
             continue
 
-        elif current_type == "RandomAI":
+        # === First two moves are random ===
+        if move_count < 2:
             pygame.time.wait(300)
             start_time = time.time()
             col = get_random_valid_column(pane.board)
             duration = time.time() - start_time
-        elif current_type == "GreedyAI":
-            pygame.time.wait(300)
-            start_time = time.time()
-            col = greedy_ai.greedy_move(pane.board, piece=turn)
-            duration = time.time() - start_time
-        elif current_type == "MinimaxAI-H1":
-            pygame.time.wait(300)
-            start_time = time.time()
-            col, _ = minimax_ai_H1.minimax(pane.board, depth=6, alpha=-math.inf, beta=math.inf, maximizingPlayer=True, piece=turn)
-            duration = time.time() - start_time
-        elif current_type == "MCTS":
-            pygame.time.wait(300)
-            start_time = time.time()
-            col = mcts_ai.mcts_move(pane.board, turn)
-            duration = time.time() - start_time
-
         else:
-            print(f"Unknown player type: {current_type}")
-            sys.exit()
+            pygame.time.wait(300)
+            start_time = time.time()
+            if current_type == "RandomAI":
+                col = get_random_valid_column(pane.board)
+            elif current_type == "GreedyAI":
+                col = greedy_ai.greedy_move(pane.board, piece=turn)
+            elif current_type == "MinimaxAI-H1":
+                col, _ = minimax_ai_H1.minimax(pane.board, depth=6, alpha=-math.inf, beta=math.inf, maximizingPlayer=True, piece=turn)
+            elif current_type == "MinimaxAI-H2":
+                col, _ = minimax_ai_H2.minimax(pane.board, depth=6, alpha=-math.inf, beta=math.inf, maximizingPlayer=True, piece=turn)
+            elif current_type == "MCTS":
+                col = mcts_ai.mcts_move(pane.board, turn)
+            else:
+                print(f"Unknown player type: {current_type}")
+                sys.exit()
+            duration = time.time() - start_time
 
         if col is not None and pane.try_drop_piece(col, turn):
             pane.fill_in_pieces()
             performance_stats[turn]["moves"] += 1
             performance_stats[turn]["times"].append(duration)
+            move_count += 1
             print(f"[Player {turn} - {current_type}] Move took {duration:.3f} seconds")
             if (r := check_game_end(pane, turn)) is not None:
                 return turn if pane.board.has_four_in_a_row(turn) else 0
             turn = 2 if turn == 1 else 1
+
 
 def report_stats(winner):
     print("\n===== Game Performance Stats =====")
