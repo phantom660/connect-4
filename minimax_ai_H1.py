@@ -74,7 +74,7 @@ def minimax(board_obj, depth, alpha, beta, maximizingPlayer, piece):
     
     if maximizingPlayer:
         value = -math.inf
-        best_column = valid_locations[0]
+        best_column = random.choice(valid_locations)
         for col in valid_locations:
             row = board_obj.get_next_open_row(col)
             temp_board = np.copy(board_obj.grid)

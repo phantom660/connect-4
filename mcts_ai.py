@@ -3,7 +3,7 @@ import math
 import random
 import time
 
-SIMULATION_TIME = 1.0  # seconds to simulate
+SIMULATION_TIME = 0.25  # seconds to simulate
 
 class Node:
     def __init__(self, board_obj, parent=None, move=None, player=1):

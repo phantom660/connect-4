@@ -73,22 +73,22 @@ def run_matchup(ai1, ai2, num_games):
 
         result, move_times = simulate_game(p1_type, p2_type)
 
-        # Accumulate times and move counts
-        stats["P1 Time"] += sum(move_times[1])
-        stats["P2 Time"] += sum(move_times[2])
-        stats["P1 Moves"] += len(move_times[1])
-        stats["P2 Moves"] += len(move_times[2])
+        # Determine which AI is actually Player 1 and Player 2 in this game
+        if i % 2 == 0:
+            ai1_player, ai2_player = 1, 2
+        else:
+            ai1_player, ai2_player = 2, 1
 
-        if result == 1:
-            if i % 2 == 0:
-                stats["P1 Wins"] += 1
-            else:
-                stats["P2 Wins"] += 1
-        elif result == 2:
-            if i % 2 == 0:
-                stats["P2 Wins"] += 1
-            else:
-                stats["P1 Wins"] += 1
+        # Accumulate times and move counts
+        stats["P1 Time"] += sum(move_times[ai1_player])
+        stats["P2 Time"] += sum(move_times[ai2_player])
+        stats["P1 Moves"] += len(move_times[ai1_player])
+        stats["P2 Moves"] += len(move_times[ai2_player])
+
+        if result == ai1_player:
+            stats["P1 Wins"] += 1
+        elif result == ai2_player:
+            stats["P2 Wins"] += 1
         else:
             stats["Draws"] += 1
 
