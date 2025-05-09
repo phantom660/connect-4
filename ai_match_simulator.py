@@ -5,6 +5,7 @@ import board
 import greedy_ai
 import minimax_ai_H1
 import minimax_ai_H2
+import minimax_ai_H3
 import mcts_ai
 
 AI_TYPES = {
@@ -12,7 +13,8 @@ AI_TYPES = {
     "2": "GreedyAI",
     "3": "MinimaxAI-H1",
     "4": "MCTS",
-    "5": "MinimaxAI-H2"
+    "5": "MinimaxAI-H2",
+    "6": "MinimaxAI-H3"
 }
 
 def get_ai_move(ai_type, board_obj, piece):
@@ -21,10 +23,13 @@ def get_ai_move(ai_type, board_obj, piece):
     elif ai_type == "GreedyAI":
         return greedy_ai.greedy_move(board_obj, piece)
     elif ai_type == "MinimaxAI-H1":
-        col, _ = minimax_ai_H1.minimax(board_obj, depth=4, alpha=-math.inf, beta=math.inf, maximizingPlayer=True, piece=piece)
+        col, _ = minimax_ai_H1.minimax(board_obj, depth=6, alpha=-math.inf, beta=math.inf, maximizingPlayer=True, piece=piece)
         return col
     elif ai_type == "MinimaxAI-H2":
-        col, _ = minimax_ai_H2.minimax(board_obj, depth=4, alpha=-math.inf, beta=math.inf, maximizingPlayer=True, piece=piece)
+        col, _ = minimax_ai_H2.minimax(board_obj, depth=6, alpha=-math.inf, beta=math.inf, maximizingPlayer=True, piece=piece)
+        return col
+    elif ai_type == "MinimaxAI-H3":
+        col, _ = minimax_ai_H3.minimax(board_obj, depth=4, alpha=-math.inf, beta=math.inf, maximizingPlayer=True, piece=piece)
         return col
     elif ai_type == "MCTS":
         return mcts_ai.mcts_move(board_obj, piece)
@@ -81,6 +86,7 @@ def run_matchup(ai1, ai2, num_games):
     }
 
     for i in range(num_games):
+        print("Game:", i)
         if i % 2 == 0:
             p1_type, p2_type = ai1, ai2
         else:
